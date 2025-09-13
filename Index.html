@@ -853,7 +853,7 @@
 
                     switch(modelPath) {
                         case './911.glb':
-                            carModel.rotation.y=THREE.MathUtils.degtoRad(90)
+                            carModel.rotation.y=THREE.MathUtils.degtoRad(-90)
                             break;
 
                     }
@@ -1002,7 +1002,7 @@
             initCameraControls();
             
             // Load the first car by default
-            loadCarModel(carData[1].modelPath);
+            loadCarModel(carData[0].modelPath);
         }
 
         // Start when document is loaded
