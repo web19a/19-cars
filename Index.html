@@ -944,7 +944,10 @@
                 
                 carCard.addEventListener('click', () => {
                     selectCar(car);
-                    document.body.scrollTo(0, 0)
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
                 });
                 
                 carGrid.appendChild(carCard);
