@@ -571,7 +571,7 @@
                 </div>
             </div>
             
-            <div class="camera-controls">
+            <div style="display:none;" class="camera-controls">
                 <button class="camera-btn active" title="Front View" data-view="front">
                     Front
                 </button>
@@ -850,13 +850,6 @@
                 modelPath,
                 (gltf) => {
                     carModel = gltf.scene;
-
-                    switch(modelPath) {
-                        case './911.glb':
-                            carModel.rotation.y=THREE.MathUtils.degtoRad(-90)
-                            break;
-
-                    }
                     scene.add(carModel);
                     
                     // Center the model
