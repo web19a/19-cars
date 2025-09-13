@@ -850,6 +850,13 @@
                 modelPath,
                 (gltf) => {
                     carModel = gltf.scene;
+
+                    switch(modelPath) {
+                        case './911.glb':
+                            carModel.rotation.y=THREE.MathUtils.degtoRad(90)
+                            break;
+
+                    }
                     scene.add(carModel);
                     
                     // Center the model
