@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Car Visualizer - Gasoline Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a1a1a;
+            --primary-light: #2a2a2a;
+            --secondary: #d4af37;
+            --secondary-dark: #b8941f;
+            --accent: #e53935;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --text-muted: #aaaaaa;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            color: var(--text-light);
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 2rem;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--secondary);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: linear-gradient(to right, var(--secondary), var(--secondary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-container {
+            position: relative;
+            width: 300px;
+        }
+
+        #search {
+            width: 100%;
+            padding: 0.8rem 1.2rem 0.8rem 3rem;
+            background: var(--primary-light);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        #search:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .header-cta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .cta-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.2rem;
+            background: var(--secondary);
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .cta-btn:hover {
+            background: var(--secondary-dark);
+            transform: translateY(-2px);
+        }
+
+        .social-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-light);
+            color: var(--text-light);
+            border-radius: 50%;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .social-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Main Layout */
+        .container {
+            display: flex;
+            padding: 0;
+            height: calc(100vh - 80px);
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            flex: 0 0 60%;
+            position: relative;
+            background: #0a0a0a;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.8rem;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem;
+            border-radius: 8px;
+        }
+
+        .camera-btn {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .camera-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--secondary);
+        }
+
+        .camera-btn.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .car-info {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 20;
+        }
+
+        .car-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .car-specs {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .spec-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            line-height: 1;
+        }
+
+        .spec-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            flex: 0 0 40%;
+            background: var(--primary);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .car-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .car-card {
+            background: var(--primary-light);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .car-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+
+        .car-card.active {
+            border-color: var(--secondary);
+        }
+
+        .car-thumb {
+            height: 120px;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            font-size: 2rem;
+        }
+
+        .car-details {
+            padding: 1rem;
+        }
+
+        .car-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .car-year {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .car-price {
+            font-weight: 700;
+            color: var(--secondary);
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--secondary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Improvements */
+        @media (max-width: 1200px) {
+            .car-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .car-thumb {
+                height: 100px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .canvas-container, .sidebar {
+                flex: 1 1 100%;
+            }
+            
+            .canvas-container {
+                height: 50vh;
+                min-height: 400px;
+            }
+            
+            .car-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .camera-controls {
+                bottom: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 90%;
+            }
+            
+            .camera-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .search-container {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .header-cta {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .car-info {
+                top: 1rem;
+                left: 1rem;
+            }
+            
+            .car-title {
+                font-size: 1.5rem;
+            }
+            
+            .car-specs {
+                gap: 1rem;
+            }
+            
+            .spec-value {
+                font-size: 1.2rem;
+            }
+            
+            .spec-label {
+                font-size: 0.7rem;
+            }
+            
+            .car-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            
+            .car-thumb {
+                height: 90px;
+            }
+            
+            .car-details {
+                padding: 0.8rem;
+            }
+            
+            .car-name {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .car-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .car-thumb {
+                height: 100px;
+            }
+            
+            .camera-controls {
+                bottom: 0.5rem;
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+            
+            .camera-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 0.8rem;
+            }
+            
+            .car-info {
+                text-align: center;
+                width: calc(100% - 2rem);
+                left: 1rem;
+            }
+            
+            .car-specs {
+                justify-content: center;
+            }
+            
+            .sidebar {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .car-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .car-thumb {
+                height: 120px;
+            }
+            
+            .logo-text {
+                font-size: 1.2rem;
+            }
+            
+            .cta-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .social-btn {
+                width: 35px;
+                height: 35px;
+            }
+        }
+
+        /* Touch device improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .car-card:hover {
+                transform: none;
+            }
+            
+            .camera-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-car"></i>
+            </div>
+            <div class="logo-text">AutoVisualizer</div>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Search cars...">
+            <div class="search-icon">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+        
+        <div class="header-cta">
+            <a href="#" class="cta-btn">
+                <i class="fas fa-briefcase"></i>
+                Portfolio
+            </a>
+            <a href="#" class="social-btn">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="social-btn">
+                <i class="fab fa-tiktok"></i>
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="renderCanvas"></canvas>
+            
+            <div class="car-info">
+                <h1 class="car-title" id="currentCarTitle">Porsche 911 Turbo S</h1>
+                <div class="car-specs">
+                    <div class="spec-item">
+                        <div class="spec-value" id="spec-hp">640 HP</div>
+                        <div class="spec-label">Power</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-value" id="spec-speed">205 MPH</div>
+                        <div class="spec-label">Top Speed</div>
+                    </div>
+                    <div class="spec-item">
+                        <div class="spec-value" id="spec-accel">2.6s</div>
+                        <div class="spec-label">0-60 MPH</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="camera-controls">
+                <button class="camera-btn active" title="Front View" data-view="front">
+                    Front
+                </button>
+                <button class="camera-btn" title="Side View" data-view="side">
+                    Side
+                </button>
+                <button class="camera-btn" title="Back View" data-view="back">
+                    Back
+                </button>
+                <button class="camera-btn" title="Top View" data-view="top">
+                    Top
+                </button>
+                <button class="camera-btn" title="Interior View" data-view="interior">
+                    Interior
+                </button>
+            </div>
+            
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loader"></div>
+                <p>Loading car model...</p>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Premium Collection</h2>
+                <p>Select a car to visualize in 3D</p>
+            </div>
+            
+            <div class="car-grid" id="carGrid">
+                <!-- Car cards will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Using CDN instead of importmap to avoid errors -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "./scripts/three.module.js",
+                "three/addons/": "./scripts/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import {
+            OrbitControls
+        } from 'three/addons/OrbitControls.js';
+        import {
+            GLTFLoader
+        } from 'three/addons/GLTFLoader.js';
+        // Car data - 20 premium cars
+        const carData = [
+            {
+                id: 1,
+                name: "Porsche 911 Turbo S",
+                year: "2023",
+                horsepower: "640 HP",
+                topSpeed: "205 mph",
+                acceleration: "2.6s",
+                price: "$203,500",
+                description: "The iconic sports car with exceptional performance",
+                imgPath: "./images/911.png",
+                modelPath: "./models/911.glb"
+            },
+            {
+                id: 2,
+                name: "Lamborghini Aventador",
+                year: "2022",
+                horsepower: "759 HP",
+                topSpeed: "217 mph",
+                acceleration: "2.8s",
+                price: "$501,000",
+                description: "Extreme Italian supercar with stunning design",
+                imgPath: "./images/lambo.png",
+                modelPath: "./models/lambo.glb"
+            },
+            {
+                id: 3,
+                name: "BMW M8 Competition",
+                year: "2023",
+                horsepower: "617 HP",
+                topSpeed: "190 mph",
+                acceleration: "3.0s",
+                price: "$130,000",
+                description: "Luxury grand tourer with track capabilities",
+                imgPath: "./images/m8_comp.png",
+                modelPath: "./models/m8_comp.glb"
+            },
+            {
+                id: 4,
+                name: "Audi R8",
+                year: "2023",
+                horsepower: "602 HP",
+                topSpeed: "205 mph",
+                acceleration: "3.1s",
+                price: "$148,700",
+                description: "Everyday supercar with a screaming V10 engine",
+                imgPath: "./images/r8.png",
+                modelPath: "./models/r8.glb"
+            },
+            {
+                id: 5,
+                name: "Ferrari SF90 Stradale",
+                year: "2023",
+                horsepower: "986 HP",
+                topSpeed: "211 mph",
+                acceleration: "2.5s",
+                price: "$625,000",
+                description: "Ferrari's first plug-in hybrid supercar",
+                imgPath: "./images/sf90.png",
+                modelPath: "./models/sf90.glb"
+            },
+            {
+                id: 6,
+                name: "McLaren 720S",
+                year: "2023",
+                horsepower: "710 HP",
+                topSpeed: "212 mph",
+                acceleration: "2.8s",
+                price: "$299,000",
+                description: "British supercar with dihedral doors and carbon fiber construction",
+                imgPath: "./images/720s.png",
+                modelPath: "./models/720s.glb"
+            },
+            {
+                id: 7,
+                name: "Mercedes-AMG GT",
+                year: "2023",
+                horsepower: "720 HP",
+                topSpeed: "202 mph",
+                acceleration: "3.1s",
+                price: "$161,000",
+                description: "Track-focused sports car with aggressive aerodynamics",
+                imgPath: "./images/audi_rs7.png",
+                modelPath: "./models/amg_gt.glb"
+            },
+            {
+                id: 8,
+                name: "Dodge Challenger SRT Demon 170",
+                year: "2023",
+                horsepower: "1025 HP",
+                topSpeed: "211 mph",
+                acceleration: "1.66s",
+                price: "$96,666",
+                description: "The most powerful production car ever made",
+                imgPath: "./images/170.png",
+                modelPath: "./models/Demon_170.glb"
+            },
+            {
+                id: 9,
+                name: "Aston Martin DBS",
+                year: "2023",
+                horsepower: "715 HP",
+                topSpeed: "211 mph",
+                acceleration: "3.2s",
+                price: "$330,000",
+                description: "British grand tourer with elegant design",
+                imgPath: "./images/audi_rs7.png",
+                modelPath: "./models/aston_martin_dbs.glb"
+            },
+            {
+                id: 10,
+                name: "Chevrolet Corvette Z06",
+                year: "2023",
+                horsepower: "670 HP",
+                topSpeed: "190 mph",
+                acceleration: "2.6s",
+                price: "$106,000",
+                description: "American sports car with mid-engine design",
+                imgPath: "./images/audi_rs7.png",
+                modelPath: "./models/corvette_z06.glb"
+            },
+            {
+                id: 11,
+                name: "Nissan GT-R Nismo",
+                year: "2023",
+                horsepower: "600 HP",
+                topSpeed: "196 mph",
+                acceleration: "2.9s",
+                price: "$215,000",
+                description: "Japanese supercar known as Godzilla",
+                imgPath: "./images/audi_rs7.png",
+                modelPath: "./models/gt-r_Nismo.glb"
+            }
+        ];
+
+        // DOM Elements
+        const carGrid = document.getElementById('carGrid');
+        const currentCarTitle = document.getElementById('currentCarTitle');
+        const specHP = document.getElementById('spec-hp');
+        const specSpeed = document.getElementById('spec-speed');
+        const specAccel = document.getElementById('spec-accel');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const cameraButtons = document.querySelectorAll('.camera-btn');
+        const canvas = document.getElementById('renderCanvas');
+
+        // Three.js variables
+        let scene, camera, renderer, controls, carModel;
+        let isRotating = false;
+
+        // Initialize Three.js scene
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            camera.position.set(5, 2, 8);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+            
+            // Add controls
+            controls = new OrbitControls(camera, canvas);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Add a simple floor grid
+            const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
+            gridHelper.position.y = -1;
+            //scene.add(gridHelper);
+            
+            // Start animation loop
+            animate();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (isRotating && carModel) {
+                carModel.rotation.y += 0.005;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        }
+
+        // Load car model
+        function loadCarModel(modelPath) {
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            
+            // Remove existing car model if any
+            if (carModel) {
+                scene.remove(carModel);
+            }
+            
+            // Load new model
+            const loader = new GLTFLoader();
+            loader.load(
+                modelPath,
+                (gltf) => {
+                    carModel = gltf.scene;
+                    scene.add(carModel);
+                    
+                    // Center the model
+                    const box = new THREE.Box3().setFromObject(carModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    carModel.position.sub(center);
+                    
+                    // Scale the model appropriately
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 5 / maxDim;
+                    carModel.scale.multiplyScalar(scale);
+                    
+                    // Reset camera position
+                    controls.reset();
+                    
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+                },
+                (xhr) => {
+                    // Loading progress
+                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+                },
+                (error) => {
+                    // Error handling
+                    console.error('Error loading model:', error);
+                    loadingOverlay.style.display = 'none';
+                    
+                    // Create a placeholder cube if model fails to load
+                    const geometry = new THREE.BoxGeometry(2, 1, 4);
+                    const material = new THREE.MeshPhongMaterial({ 
+                        color: 0xd4af37,
+                        shininess: 100
+                    });
+                    carModel = new THREE.Mesh(geometry, material);
+                    scene.add(carModel);
+                }
+            );
+        }
+
+        // Set camera view
+        function setCameraView(view) {
+            if (!carModel) return;
+            
+            // Get model bounding box
+            const box = new THREE.Box3().setFromObject(carModel);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            // Set camera position based on view
+            switch(view) {
+                case 'front':
+                    camera.position.set(center.x, center.y, center.z + size.z * 2);
+                    break;
+                case 'side':
+                    camera.position.set(center.x + size.x * 2, center.y, center.z);
+                    break;
+                case 'back':
+                    camera.position.set(center.x, center.y, center.z - size.z * 2);
+                    break;
+                case 'top':
+                    camera.position.set(center.x, center.y + size.y * 2, center.z);
+                    break;
+                case 'interior':
+                    camera.position.set(center.x, center.y + size.y * 0.5, center.z + size.z * 0.8);
+                    break;
+            }
+            
+            // Look at the center of the model
+            controls.target.copy(center);
+            controls.update();
+        }
+
+        // Initialize the car grid
+        function initCarGrid() {
+            carData.forEach(car => {
+                const carCard = document.createElement('div');
+                carCard.className = 'car-card';
+                if (car.id === 1) carCard.classList.add('active');
+                
+                carCard.innerHTML = `
+                    <div class="car-thumb">
+                        <img src="${car.imgPath}">
+                    </div>
+                    <div class="car-details">
+                        <div class="car-name">${car.name}</div>
+                        <div class="car-year">${car.year}</div>
+                        <div class="car-price">${car.price}</div>
+                    </div>
+                `;
+                
+                carCard.addEventListener('click', () => {
+                    selectCar(car);
+                });
+                
+                carGrid.appendChild(carCard);
+            });
+        }
+
+        // Select a car
+        function selectCar(car) {
+            // Update UI
+            currentCarTitle.textContent = car.name;
+            
+            // Update the specification values
+            specHP.textContent = car.horsepower;
+            specSpeed.textContent = car.topSpeed;
+            specAccel.textContent = car.acceleration;
+            
+            // Highlight selected car
+            document.querySelectorAll('.car-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            event.currentTarget.classList.add('active');
+            
+            // Load the car model
+            loadCarModel(car.modelPath);
+        }
+
+        // Camera view change
+        function initCameraControls() {
+            cameraButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    cameraButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    const view = button.dataset.view;
+                    setCameraView(view);
+                });
+            });
+        }
+
+        // Initialize the application
+        function init() {
+            initScene();
+            initCarGrid();
+            initCameraControls();
+            
+            // Load the first car by default
+            loadCarModel(carData[7].modelPath);
+        }
+
+        // Start when document is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
